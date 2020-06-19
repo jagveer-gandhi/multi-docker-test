@@ -1,0 +1,22 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t jagveer/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true jagveer/react-test npm test -- --coverage
+
+after_success:
+  - docker build -t jagveer/multi-client ./client
+  - docker build -t jagveer/multi-nginx ./nginx
+  - docker build -t jagveer/multi-server ./server
+  - docker build -t jagveer/multi-worker ./worker
+  #Login to docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DDOCKER_ID" --password-stdin
+  #Take the build images and push them to docker hub
+  - docker push jagveer/multi-client
+  - docker push jagveer/multi-nginx
+  - docker push jagveer/multi-server
+  - docker push jagveer/multi-worker
